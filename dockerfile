@@ -1,17 +1,28 @@
-# Use official Nginx as base image
-FROM nginx:alpine
+FROM node:24-alpine AS builder
 
-# Set the working directory
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy the static files to the container
-COPY index.html .
-COPY images/ images/
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY app ./app
+COPY public ./public
+COPY instrumentation.js instrumentation.node.js ./
+RUN npm run build
 
-# Expose port 80
-EXPOSE 80
+FROM node:24-alpine AS runner
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=5000
+
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/.next ./.next
+COPY --from=builder --chown=node:node /app/public ./public
+
+USER node
+EXPOSE 5000
+CMD ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]
