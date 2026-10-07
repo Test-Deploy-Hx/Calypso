@@ -1,5 +1,13 @@
 .hxkey
+<<<<<<< HEAD
 .env.development
 .env.production
 .env
 .env.local
+=======
+.env*
+!.env.example
+node_modules/
+.next/
+npm-debug.log*
+>>>>>>> 2728c43cb8af3f3d2e0d4b046adb1c8d4c4955a5
