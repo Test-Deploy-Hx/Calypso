@@ -1,0 +1,5 @@
+.hxkey
+.env.development
+.env.production
+.env
+.env.local
